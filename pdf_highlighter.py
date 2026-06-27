@@ -1,13 +1,23 @@
-import sys
 import os
+import sys
 import time
+
 import pymupdf
-from PyQt5.QtWidgets import (
-    QApplication, QMainWindow, QFileDialog, QVBoxLayout, QPushButton, QLabel,
-    QComboBox, QTextEdit, QWidget, QProgressBar, QMessageBox,
-)
 from PyQt5.QtCore import QThread, pyqtSignal
 from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import (
+    QApplication,
+    QComboBox,
+    QFileDialog,
+    QLabel,
+    QMainWindow,
+    QMessageBox,
+    QProgressBar,
+    QPushButton,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
+)
 
 COLORS = {
     "Yellow": (1, 1, 0),
@@ -25,7 +35,7 @@ COLORS = {
     "Dark Green": (0, 0.5, 0),
 }
 DEFAULT_COLOR = "Yellow"
-OUTPUT_DIR = os.path.abspath('Result')
+OUTPUT_DIR = os.path.abspath("Result")
 
 
 class HighlighterWorker(QThread):
@@ -42,14 +52,18 @@ class HighlighterWorker(QThread):
 
     def run(self):
         try:
-            total = len(self.search_terms) * sum(pymupdf.open(p).page_count for p in self.input_pdfs)
+            total = len(self.search_terms) * sum(
+                pymupdf.open(p).page_count for p in self.input_pdfs
+            )
             done = 0
 
             for input_pdf, output_pdf in zip(self.input_pdfs, self.output_pdfs):
                 doc = pymupdf.open(input_pdf)
                 fname = os.path.basename(input_pdf)
                 for idx, term in enumerate(self.search_terms, 1):
-                    self.status.emit(f"[{idx}/{len(self.search_terms)}] Searching '{term}' in {fname}")
+                    self.status.emit(
+                        f"[{idx}/{len(self.search_terms)}] Searching '{term}' in {fname}"
+                    )
                     for page_num in range(doc.page_count):
                         page = doc.load_page(page_num)
                         for inst in page.search_for(term):
@@ -73,7 +87,7 @@ class PDFHighlighterApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("PDF Highlighter")
-        icon_path = os.path.join(getattr(sys, '_MEIPASS', ''), 'icon.ico')
+        icon_path = os.path.join(getattr(sys, "_MEIPASS", ""), "icon.ico")
         if os.path.exists(icon_path):
             self.setWindowIcon(QIcon(icon_path))
         self.setGeometry(300, 300, 600, 600)
@@ -161,31 +175,41 @@ class PDFHighlighterApp(QMainWindow):
         box.setText(f"'{os.path.basename(output_path)}' already exists.")
         btn_ow = box.addButton("Overwrite", QMessageBox.AcceptRole)
         btn_rn = box.addButton("Rename", QMessageBox.ActionRole)
-        btn_cl = box.addButton("Cancel", QMessageBox.RejectRole)
+        box.addButton("Cancel", QMessageBox.RejectRole)
         box.exec_()
         clicked = box.clickedButton()
         if clicked == btn_ow:
             return output_path
         if clicked == btn_rn:
             ts = time.strftime("%d.%m.%y_%H%M")
-            base = os.path.basename(output_path).replace('.pdf', '')
-            return os.path.join(OUTPUT_DIR, f'{base}_{ts}.pdf')
+            base = os.path.basename(output_path).replace(".pdf", "")
+            return os.path.join(OUTPUT_DIR, f"{base}_{ts}.pdf")
         return None
 
     def start_processing(self):
         if not self.pdf1_path or not self.txt_path:
-            QMessageBox.warning(self, "Missing Input", "Select at least one PDF and a search terms file.")
+            QMessageBox.warning(
+                self, "Missing Input", "Select at least one PDF and a search terms file."
+            )
             return
 
         with open(self.txt_path) as f:
             terms = f.read().splitlines()
 
         input_pdfs = [self.pdf1_path]
-        output_pdfs = [os.path.join(OUTPUT_DIR, os.path.basename(self.pdf1_path).replace('.pdf', '_highlighted.pdf'))]
+        output_pdfs = [
+            os.path.join(
+                OUTPUT_DIR, os.path.basename(self.pdf1_path).replace(".pdf", "_highlighted.pdf")
+            )
+        ]
 
         if self.pdf2_path:
             input_pdfs.append(self.pdf2_path)
-            output_pdfs.append(os.path.join(OUTPUT_DIR, os.path.basename(self.pdf2_path).replace('.pdf', '_highlighted.pdf')))
+            output_pdfs.append(
+                os.path.join(
+                    OUTPUT_DIR, os.path.basename(self.pdf2_path).replace(".pdf", "_highlighted.pdf")
+                )
+            )
 
         resolved = []
         for out in output_pdfs:
